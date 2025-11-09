@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US Economic Sentiment & Uncertainty Dashboard</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.5.0/dist/Recharts.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+        const { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } = Recharts;
+
+        // Lucide React icons as simple SVG components
+        const TrendingDown = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                <polyline points="17 18 23 18 23 12"></polyline>
+            </svg>
+        );
+
+        const TrendingUp = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
+        );
+
+        const Minus = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        );
+
+        const AlertCircle = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+        );
+
+        const Info = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+        );
+
+        const BarChart3 = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <line x1="12" y1="20" x2="12" y2="10"></line>
+                <line x1="18" y1="20" x2="18" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="16"></line>
+            </svg>
+        );
+
+        const X = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        );
+
+        const SentimentDashboard = () => {
+            const [selectedCategory, setSelectedCategory] = useState('all');
+            const [selectedSurvey, setSelectedSurvey] = useState(null);
+            
+            const consumerData = [
+                {
+                name: "University of Michigan Consumer Sentiment",
+                current: 55.0,
+                trend: "down",
+                change: -22,
+                period: "Oct 2025",
+                baseline: 98,
+                historicalAvg: 85.4,
+                allTimeHigh: 111.4,
+                allTimeHighDate: "Jan 2000",
+                allTimeLow: 50.0,
+                allTimeLowDate: "Jun 2022",
+                key: "Overall sentiment at lowest since 2011",
+                concern: "Policy uncertainty, market uncertainty",
+                historicalRange: "Normal range: 75-95",
+                context: "Below 80 indicates economic pessimism. Current level comparable to financial crisis depths.",
+                recentHistory: [
+                    { date: "Oct 2024", value: 70.5 },
+                    { date: "Jan 2025", value: 73.2 },
+                    { date: "Mar 2025", value: 57.0 },
+                    { date: "Jun 2025", value: 65.6 },
+                    { date: "Sep 2025", value: 55.1 },
+                    { date: "Oct 2025", value: 55.0 }
+                ],
+                historicalMilestones: [
+                    { event: "Pre-pandemic (2019)", value: 96.9 },
+                    { event: "COVID crash (Apr 2020)", value: 71.8 },
+                    { event: "Peak inflation (Jun 2022)", value: 50.0 },
+                    { event: "Current (Oct 2025)", value: 55.0 }
+                ]
+                },
+                {
+                name: "Conference Board Consumer Confidence",
+                current: 94.2,
+                trend: "down",
+                change: -3.6,
+                period: "Sep 2025",
+                baseline: 100,
+                historicalAvg: 98.3,
+                allTimeHigh: 144.7,
+                allTimeHighDate: "Oct 2000",
+                allTimeLow: 25.3,
+                allTimeLowDate: "Feb 2009",
+                key: "Expectations below recession threshold of 80",
+                concern: "Labor market conditions weakening",
+                historicalRange: "Normal range: 90-110",
+                context: "Expectations Index at 73.4, well below recession threshold. Present Situation at 125.4.",
+                recentHistory: [
+                    { date: "Oct 2024", value: 108.7 },
+                    { date: "Jan 2025", value: 102.3 },
+                    { date: "Apr 2025", value: 86.0 },
+                    { date: "Jun 2025", value: 99.2 },
+                    { date: "Aug 2025", value: 97.8 },
+                    { date: "Sep 2025", value: 94.2 }
+                ],
+                historicalMilestones: [
+                    { event: "Great Recession (2009)", value: 25.3 },
+                    { event: "Pre-pandemic (2019)", value: 128.2 },
+                    { event: "Pandemic low (Apr 2020)", value: 85.7 },
+                    { event: "Current (Sep 2025)", value: 94.2 }
+                ]
+                },
+                {
+                name: "Morning Consult ICS",
+                current: 87.3,
+                trend: "down",
+                change: -2.1,
+                period: "Recent",
+                baseline: 100,
+                historicalAvg: 92.5,
+                allTimeHigh: 118.3,
+                allTimeHighDate: "Feb 2020",
+                allTimeLow: 62.4,
+                allTimeLowDate: "Apr 2020",
+                key: "High earners showing substantial drops",
+                concern: "Government shutdown impacts",
+                historicalRange: "Normal range: 85-105",
+                context: "Real-time daily tracking shows faster declines than monthly surveys capture.",
+                recentHistory: [
+                    { date: "Oct 2024", value: 95.2 },
+                    { date: "Jan 2025", value: 98.1 },
+                    { date: "Apr 2025", value: 82.5 },
+                    { date: "Jul 2025", value: 89.4 },
+                    { date: "Sep 2025", value: 89.4 },
+                    { date: "Oct 2025", value: 87.3 }
+                ],
+                historicalMilestones: [
+                    { event: "Pre-pandemic (Feb 2020)", value: 118.3 },
+                    { event: "Pandemic low (Apr 2020)", value: 62.4 },
+                    { event: "Post-recovery (2021)", value: 105.7 },
+                    { event: "Current", value: 87.3 }
+                ]
+                },
+                {
+                name: "NY Fed Consumer Expectations - Inflation",
+                current: 3.4,
+                trend: "up",
+                change: 0.2,
+                period: "Sep 2025",
+                baseline: 2.0,
+                historicalAvg: 3.1,
+                allTimeHigh: 6.8,
+                allTimeHighDate: "Jun 2022",
+                allTimeLow: 2.0,
+                allTimeLowDate: "Sep 2013",
+                key: "1-year ahead inflation expectations (percentage)",
+                concern: "Deteriorating labor market expectations",
+                historicalRange: "Pre-pandemic: 2.5-3.0%",
+                context: "3-year and 5-year expectations both at 3.0%. Elevated uncertainty about inflation path.",
+                recentHistory: [
+                    { date: "Oct 2024", value: 2.9 },
+                    { date: "Jan 2025", value: 3.0 },
+                    { date: "Mar 2025", value: 3.8 },
+                    { date: "Jun 2025", value: 3.3 },
+                    { date: "Aug 2025", value: 3.2 },
+                    { date: "Sep 2025", value: 3.4 }
+                ],
+                historicalMilestones: [
+                    { event: "Pre-pandemic avg (2019)", value: 2.6 },
+                    { event: "Peak inflation (Jun 2022)", value: 6.8 },
+                    { event: "Decline phase (2023)", value: 3.5 },
+                    { event: "Current (Sep 2025)", value: 3.4 }
+                ]
+                }
+            ];
+
+            const businessData = [
+                {
+                name: "Conference Board CEO Confidence",
+                current: 48,
+                trend: "down",
+                change: -1,
+                period: "Q4 2025",
+                baseline: 50,
+                historicalAvg: 55.2,
+                allTimeHigh: 83,
+                allTimeHighDate: "Q1 1996",
+                allTimeLow: 23,
+                allTimeLowDate: "Q1 2009",
+                key: "Below 50 = more negative than positive",
+                concern: "Short-term economic outlook negative",
+                historicalRange: "Typical range: 45-65",
+                context: "38% say industry conditions worse vs 6 months ago. Only 29% expect improvement.",
+                recentHistory: [
+                    { date: "Q4 2024", value: 54 },
+                    { date: "Q1 2025", value: 51 },
+                    { date: "Q2 2025", value: 46 },
+                    { date: "Q3 2025", value: 49 },
+                    { date: "Q4 2025", value: 48 }
+                ],
+                historicalMilestones: [
+                    { event: "Financial Crisis (Q1 2009)", value: 23 },
+                    { event: "Pre-pandemic (Q4 2019)", value: 43 },
+                    { event: "Post-election (Q1 2025)", value: 51 },
+                    { event: "Current (Q4 2025)", value: 48 }
+                ]
+                },
+                {
+                name: "Duke/Fed CFO Survey Optimism",
+                current: 62.9,
+                trend: "up",
+                change: 2.0,
+                period: "Q3 2025",
+                baseline: 60,
+                historicalAvg: 64.3,
+                allTimeHigh: 75.4,
+                allTimeHighDate: "Q4 2018",
+                allTimeLow: 37.2,
+                allTimeLowDate: "Q2 2020",
+                key: "Uncertainty dropped from Q2",
+                concern: "Tariffs remain top concern (30%)",
+                historicalRange: "Normal: 60-70, Optimistic: >70",
+                context: "46.5% say price expectations affected by tariffs. 41% postponed investments in H1 2025.",
+                recentHistory: [
+                    { date: "Q4 2024", value: 68.5 },
+                    { date: "Q1 2025", value: 65.2 },
+                    { date: "Q2 2025", value: 60.9 },
+                    { date: "Q3 2025", value: 62.9 }
+                ],
+                historicalMilestones: [
+                    { event: "Trade war fears (Q3 2019)", value: 58.5 },
+                    { event: "Pandemic low (Q2 2020)", value: 37.2 },
+                    { event: "Post-pandemic peak (Q4 2021)", value: 72.8 },
+                    { event: "Current (Q3 2025)", value: 62.9 }
+                ]
+                },
+                {
+                name: "NFIB Small Business Optimism",
+                current: 101.2,
+                trend: "up",
+                change: 1.0,
+                period: "Sep 2025",
+                baseline: 98,
+                historicalAvg: 98.1,
+                allTimeHigh: 108.8,
+                allTimeHighDate: "Aug 1983",
+                allTimeLow: 80.1,
+                allTimeLowDate: "Mar 2020",
+                key: "Above historical avg for first time since 2021",
+                concern: "Labor quality remains top problem",
+                historicalRange: "Normal range: 95-103",
+                context: "Sales expectations strongest since Dec 2020. Hiring plans up sharply.",
+                recentHistory: [
+                    { date: "Q4 2024", value: 97.8 },
+                    { date: "Jan 2025", value: 99.4 },
+                    { date: "Apr 2025", value: 90.5 },
+                    { date: "Jun 2025", value: 88.5 },
+                    { date: "Aug 2025", value: 100.2 },
+                    { date: "Sep 2025", value: 101.2 }
+                ],
+                historicalMilestones: [
+                    { event: "Great Recession (Mar 2009)", value: 81.0 },
+                    { event: "Pre-pandemic (Dec 2019)", value: 102.7 },
+                    { event: "Pandemic low (Mar 2020)", value: 80.1 },
+                    { event: "Current (Sep 2025)", value: 101.2 }
+                ]
+                },
+                {
+                name: "Business Roundtable CEO Outlook",
+                current: 79,
+                trend: "down",
+                change: -2,
+                period: "Q3 2025",
+                baseline: 80,
+                historicalAvg: 83.6,
+                allTimeHigh: 113,
+                allTimeHighDate: "Q1 2018",
+                allTimeLow: 34,
+                allTimeLowDate: "Q2 2020",
+                key: "Below 80 threshold for weak outlook",
+                concern: "Sales and capital spending plans down",
+                historicalRange: "Strong: >80, Weak: <80",
+                context: "CEOs plan to reduce hiring and investment. Economic uncertainty cited most.",
+                recentHistory: [
+                    { date: "Q4 2024", value: 93 },
+                    { date: "Q1 2025", value: 92 },
+                    { date: "Q2 2025", value: 81 },
+                    { date: "Q3 2025", value: 79 }
+                ],
+                historicalMilestones: [
+                    { event: "Tax cuts (Q1 2018)", value: 113 },
+                    { event: "Pre-pandemic (Q4 2019)", value: 95 },
+                    { event: "Pandemic low (Q2 2020)", value: 34 },
+                    { event: "Current (Q3 2025)", value: 79 }
+                ]
+                },
+                {
+                name: "Philly Fed Manufacturing Outlook",
+                current: -5.5,
+                trend: "up",
+                change: 4.2,
+                period: "Oct 2025",
+                baseline: 0,
+                historicalAvg: 5.8,
+                allTimeHigh: 55.0,
+                allTimeHighDate: "Jan 2004",
+                allTimeLow: -56.6,
+                allTimeLowDate: "Apr 2020",
+                key: "Negative = contraction in manufacturing",
+                concern: "New orders still contracting",
+                historicalRange: "Expansion: >0, Contraction: <0",
+                context: "Firms still cutting employment. Price pressures stabilizing.",
+                recentHistory: [
+                    { date: "Oct 2024", value: 10.3 },
+                    { date: "Jan 2025", value: -10.6 },
+                    { date: "Apr 2025", value: -31.3 },
+                    { date: "Jul 2025", value: -9.7 },
+                    { date: "Sep 2025", value: -9.7 },
+                    { date: "Oct 2025", value: -5.5 }
+                ],
+                historicalMilestones: [
+                    { event: "Manufacturing boom (2004)", value: 55.0 },
+                    { event: "Great Recession (2008)", value: -40.3 },
+                    { event: "Pandemic (Apr 2020)", value: -56.6 },
+                    { event: "Current (Oct 2025)", value: -5.5 }
+                ]
+                },
+                {
+                name: "NY Fed Manufacturing Index",
+                current: -11.9,
+                trend: "down",
+                change: -11.3,
+                period: "Oct 2025",
+                baseline: 0,
+                historicalAvg: 5.2,
+                allTimeHigh: 43.4,
+                allTimeHighDate: "May 2021",
+                allTimeLow: -78.2,
+                allTimeLowDate: "Apr 2020",
+                key: "Sharp drop into contraction territory",
+                concern: "New orders and shipments falling",
+                historicalRange: "Expansion: >0, Contraction: <0",
+                context: "Employment index turned negative. 6-month outlook deteriorated significantly.",
+                recentHistory: [
+                    { date: "Oct 2024", value: -6.0 },
+                    { date: "Jan 2025", value: 12.1 },
+                    { date: "Apr 2025", value: -15.6 },
+                    { date: "Jul 2025", value: -6.6 },
+                    { date: "Sep 2025", value: -0.6 },
+                    { date: "Oct 2025", value: -11.9 }
+                ],
+                historicalMilestones: [
+                    { event: "Post-pandemic recovery (May 2021)", value: 43.4 },
+                    { event: "Pre-pandemic (2019)", value: 10.0 },
+                    { event: "Pandemic crash (Apr 2020)", value: -78.2 },
+                    { event: "Current (Oct 2025)", value: -11.9 }
+                ]
+                }
+            ];
+
+            const uncertaintyData = [
+                {
+                name: "Economic Policy Uncertainty Index",
+                current: 214,
+                trend: "up",
+                change: 45,
+                period: "Sep 2025",
+                baseline: 100,
+                historicalAvg: 127.3,
+                allTimeHigh: 589,
+                allTimeHighDate: "Apr 2020",
+                allTimeLow: 47,
+                allTimeLowDate: "Aug 2005",
+                key: "Elevated above long-term average",
+                concern: "Election and policy uncertainty",
+                historicalRange: "Low: <100, Moderate: 100-200, High: >200",
+                context: "Driven by tariff policy debates and fiscal uncertainty. Comparable to 2019 trade war levels.",
+                recentHistory: [
+                    { date: "Oct 2024", value: 156 },
+                    { date: "Jan 2025", value: 189 },
+                    { date: "Apr 2025", value: 243 },
+                    { date: "Jun 2025", value: 169 },
+                    { date: "Aug 2025", value: 169 },
+                    { date: "Sep 2025", value: 214 }
+                ],
+                historicalMilestones: [
+                    { event: "Pre-crisis normal (2005)", value: 47 },
+                    { event: "Financial crisis (2008-09)", value: 250 },
+                    { event: "Pandemic peak (Apr 2020)", value: 589 },
+                    { event: "Current (Sep 2025)", value: 214 }
+                ]
+                },
+                {
+                name: "VIX (Market Volatility Index)",
+                current: 22.4,
+                trend: "up",
+                change: 6.1,
+                period: "Recent",
+                baseline: 20,
+                historicalAvg: 19.5,
+                allTimeHigh: 82.7,
+                allTimeHighDate: "Mar 2020",
+                allTimeLow: 9.1,
+                allTimeLowDate: "Nov 2017",
+                key: "Above 20 = elevated market fear",
+                concern: "Increased equity market volatility",
+                historicalRange: "Low: <15, Normal: 15-20, High: >20",
+                context: "Elevated volatility reflects uncertainty about Fed policy and growth outlook.",
+                recentHistory: [
+                    { date: "Oct 2024", value: 15.3 },
+                    { date: "Jan 2025", value: 18.2 },
+                    { date: "Apr 2025", value: 28.9 },
+                    { date: "Jun 2025", value: 16.3 },
+                    { date: "Sep 2025", value: 16.3 },
+                    { date: "Oct 2025", value: 22.4 }
+                ],
+                historicalMilestones: [
+                    { event: "Complacency (Nov 2017)", value: 9.1 },
+                    { event: "Financial crisis (2008)", value: 59.9 },
+                    { event: "Pandemic spike (Mar 2020)", value: 82.7 },
+                    { event: "Current", value: 22.4 }
+                ]
+                },
+                {
+                name: "JoltsJob Openings Uncertainty",
+                current: 7.4,
+                trend: "down",
+                change: -0.8,
+                period: "Sep 2025",
+                baseline: 7.0,
+                historicalAvg: 6.2,
+                allTimeHigh: 12.0,
+                allTimeHighDate: "Mar 2022",
+                allTimeLow: 2.7,
+                allTimeLowDate: "Jul 2009",
+                key: "Job openings declining from peak (millions)",
+                concern: "Labor market softening",
+                historicalRange: "Tight: >8M, Normal: 5-7M, Weak: <5M",
+                context: "Declining from historic highs but still above pre-pandemic levels. Quits rate falling.",
+                recentHistory: [
+                    { date: "Oct 2024", value: 7.5 },
+                    { date: "Jan 2025", value: 8.9 },
+                    { date: "Apr 2025", value: 8.1 },
+                    { date: "Jun 2025", value: 8.2 },
+                    { date: "Aug 2025", value: 8.2 },
+                    { date: "Sep 2025", value: 7.4 }
+                ],
+                historicalMilestones: [
+                    { event: "Great Recession (2009)", value: 2.7 },
+                    { event: "Pre-pandemic (2019)", value: 7.0 },
+                    { event: "Great Resignation peak (Mar 2022)", value: 12.0 },
+                    { event: "Current (Sep 2025)", value: 7.4 }
+                ]
+                },
+                {
+                name: "Fed Rate Uncertainty (Implied Volatility)",
+                current: 68,
+                trend: "up",
+                change: 15,
+                period: "Oct 2025",
+                baseline: 50,
+                historicalAvg: 52.3,
+                allTimeHigh: 162,
+                allTimeHighDate: "Mar 2020",
+                allTimeLow: 18,
+                allTimeLowDate: "Jan 2022",
+                key: "Market uncertainty about Fed policy path",
+                concern: "Conflicting inflation and growth signals",
+                historicalRange: "Low: <40, Moderate: 40-60, High: >60",
+                context: "Markets pricing in wide range of Fed outcomes. Policy path unusually uncertain.",
+                recentHistory: [
+                    { date: "Oct 2024", value: 45 },
+                    { date: "Jan 2025", value: 53 },
+                    { date: "Apr 2025", value: 87 },
+                    { date: "Jun 2025", value: 53 },
+                    { date: "Sep 2025", value: 53 },
+                    { date: "Oct 2025", value: 68 }
+                ],
+                historicalMilestones: [
+                    { event: "Rate certainty (Jan 2022)", value: 18 },
+                    { event: "Tightening cycle (2023)", value: 85 },
+                    { event: "Pandemic (Mar 2020)", value: 162 },
+                    { event: "Current (Oct 2025)", value: 68 }
+                ]
+                }
+            ];
+
+            const getTrendIcon = (trend, isUncertainty = false) => {
+                if (isUncertainty) {
+                return trend === 'up' ? <TrendingUp className="w-5 h-5 text-red-500" /> : <TrendingDown className="w-5 h-5 text-green-500" />;
+                }
+                return trend === 'up' ? <TrendingUp className="w-5 h-5 text-red-500" /> : 
+                    trend === 'down' ? <TrendingDown className="w-5 h-5 text-green-500" /> : 
+                    <Minus className="w-5 h-5 text-gray-400" />;
+            };
+
+            const getTrendColor = (trend, isUncertainty = false) => {
+                if (isUncertainty) {
+                return trend === 'up' ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50';
+                }
+                return trend === 'up' ? 'text-red-600 bg-red-50' : 
+                    trend === 'down' ? 'text-green-600 bg-green-50' : 
+                    'text-gray-600 bg-gray-50';
+            };
+
+            const calculatePercentOfRange = (current, low, high) => {
+                return ((current - low) / (high - low) * 100).toFixed(0);
+            };
+
+            const getBarColor = (percent) => {
+                if (percent < 33) return '#dc2626';
+                if (percent < 67) return '#f59e0b';
+                return '#16a34a';
+            };
+
+            const SurveyCard = ({ survey, isUncertainty = false }) => {
+                const percentOfRange = calculatePercentOfRange(survey.current, survey.allTimeLow, survey.allTimeHigh);
+                const barColor = getBarColor(percentOfRange);
+
+                return (
+                <div 
+                    className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-lg transition-shadow cursor-pointer"
+                    onClick={() => setSelectedSurvey(survey)}
+                >
+                    <div className="flex justify-between items-start mb-3">
+                    <h3 className="text-lg font-semibold text-gray-900 flex-1">{survey.name}</h3>
+                    {getTrendIcon(survey.trend, isUncertainty)}
+                    </div>
+                    
+                    <div className="mb-4">
+                    <div className="text-3xl font-bold text-gray-900 mb-1">
+                        {survey.current}
+                        <span className={`ml-2 text-lg font-medium ${getTrendColor(survey.trend, isUncertainty)}`}>
+                        {survey.change > 0 ? '+' : ''}{survey.change}
+                        </span>
+                    </div>
+                    <div className="text-sm text-gray-500">{survey.period}</div>
+                    </div>
+
+                    <div className="mb-3">
+                    <div className="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>Historical Range</span>
+                        <span>{percentOfRange}%</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div 
+                        className="h-full rounded-full transition-all"
+                        style={{ 
+                            width: `${percentOfRange}%`,
+                            backgroundColor: barColor
+                        }}
+                        />
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>{survey.allTimeLow}</span>
+                        <span>{survey.allTimeHigh}</span>
+                    </div>
+                    </div>
+
+                    <div className="space-y-2 text-sm">
+                    <div className="flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                        <div>
+                        <div className="font-medium text-gray-700">{survey.key}</div>
+                        <div className="text-gray-600">{survey.concern}</div>
+                        </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                        <Info className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                        <div className="text-gray-600">{survey.context}</div>
+                    </div>
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
+                    Click for detailed historical trends and analysis
+                    </div>
+                </div>
+                );
+            };
+
+            const DetailModal = ({ survey, onClose }) => {
+                return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={onClose}>
+                    <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                    <div className="p-6">
+                        <div className="flex justify-between items-start mb-6">
+                        <div>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-2">{survey.name}</h2>
+                            <div className="flex gap-4 text-sm text-gray-600">
+                            <div>Current: <span className="font-semibold">{survey.current}</span></div>
+                            <div>Avg: <span className="font-semibold">{survey.historicalAvg}</span></div>
+                            <div>Baseline: <span className="font-semibold">{survey.baseline}</span></div>
+                            </div>
+                        </div>
+                        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                            <X className="w-6 h-6" />
+                        </button>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-6 mb-6">
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                            <h3 className="font-semibold text-gray-900 mb-2">Historical Context</h3>
+                            <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">All-Time High:</span>
+                                <span className="font-medium">{survey.allTimeHigh} ({survey.allTimeHighDate})</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">All-Time Low:</span>
+                                <span className="font-medium">{survey.allTimeLow} ({survey.allTimeLowDate})</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Historical Average:</span>
+                                <span className="font-medium">{survey.historicalAvg}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Normal Range:</span>
+                                <span className="font-medium">{survey.historicalRange}</span>
+                            </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-amber-50 p-4 rounded-lg">
+                            <h3 className="font-semibold text-gray-900 mb-2">Current Situation</h3>
+                            <div className="space-y-2 text-sm">
+                            <div>
+                                <span className="text-gray-600">Key Finding:</span>
+                                <p className="font-medium mt-1">{survey.key}</p>
+                            </div>
+                            <div>
+                                <span className="text-gray-600">Main Concern:</span>
+                                <p className="font-medium mt-1">{survey.concern}</p>
+                            </div>
+                            </div>
+                        </div>
+                        </div>
+
+                        <div className="mb-6">
+                        <h3 className="font-semibold text-gray-900 mb-3">Recent Trend (Last 12 Months)</h3>
+                        <ResponsiveContainer width="100%" height={250}>
+                            <LineChart data={survey.recentHistory}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                            <YAxis tick={{ fontSize: 12 }} domain={['dataMin - 5', 'dataMax + 5']} />
+                            <Tooltip />
+                            <ReferenceLine y={survey.baseline} stroke="#666" strokeDasharray="5 5" label="Baseline" />
+                            <ReferenceLine y={survey.historicalAvg} stroke="#3b82f6" strokeDasharray="3 3" label="Avg" />
+                            <Line type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={2} dot={{ r: 4 }} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                        </div>
+
+                        <div>
+                        <h3 className="font-semibold text-gray-900 mb-3">Historical Milestones</h3>
+                        <ResponsiveContainer width="100%" height={200}>
+                            <BarChart data={survey.historicalMilestones} layout="vertical">
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" tick={{ fontSize: 12 }} />
+                            <YAxis type="category" dataKey="event" tick={{ fontSize: 11 }} width={150} />
+                            <Tooltip />
+                            <Bar dataKey="value" fill="#3b82f6" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                );
+            };
+
+            const KeyInsights = () => {
+                const insights = [
+                { 
+                    title: "Consumer Sentiment Crisis", 
+                    severity: "high",
+                    description: "Michigan sentiment at 55.0, lowest since 2011. All major consumer indices below historical averages."
+                },
+                { 
+                    title: "Business Caution", 
+                    severity: "medium",
+                    description: "CEO confidence at 48 (below 50 threshold). CFO survey shows 41% postponed H1 2025 investments."
+                },
+                { 
+                    title: "Manufacturing Weakness", 
+                    severity: "high",
+                    description: "Both Philly Fed (-5.5) and NY Fed (-11.9) in contraction. New orders declining."
+                },
+                { 
+                    title: "Policy Uncertainty Elevated", 
+                    severity: "medium",
+                    description: "EPU at 214, well above 100 baseline. Comparable to 2019 trade war levels."
+                }
+                ];
+
+                return (
+                <div className="mb-8 bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                    <AlertCircle className="w-6 h-6 text-red-600" />
+                    <h2 className="text-xl font-bold text-gray-900">Key Economic Insights (2025)</h2>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                    {insights.map((insight, idx) => (
+                        <div key={idx} className={`p-4 rounded-lg ${insight.severity === 'high' ? 'bg-red-100 border border-red-300' : 'bg-orange-100 border border-orange-300'}`}>
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className={`w-2 h-2 rounded-full ${insight.severity === 'high' ? 'bg-red-600' : 'bg-orange-600'}`}></div>
+                            <h3 className="font-semibold text-gray-900">{insight.title}</h3>
+                        </div>
+                        <p className="text-sm text-gray-700">{insight.description}</p>
+                        </div>
+                    ))}
+                    </div>
+                </div>
+                );
+            };
+
+            const ComparisonTable = () => {
+                const allSurveys = [...consumerData, ...businessData, ...uncertaintyData].map(s => ({
+                ...s,
+                percentOfRange: calculatePercentOfRange(s.current, s.allTimeLow, s.allTimeHigh),
+                vsAvg: ((s.current - s.historicalAvg) / s.historicalAvg * 100).toFixed(1)
+                })).sort((a, b) => parseFloat(a.percentOfRange) - parseFloat(b.percentOfRange));
+
+                return (
+                <div className="mb-8 bg-white border border-gray-200 rounded-lg p-6 overflow-x-auto">
+                    <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Comparison: All Surveys Ranked by Historical Position</h2>
+                    <table className="w-full text-sm">
+                    <thead className="bg-gray-50">
+                        <tr>
+                        <th className="text-left p-2 font-semibold">Survey</th>
+                        <th className="text-right p-2 font-semibold">Current</th>
+                        <th className="text-right p-2 font-semibold">vs Avg</th>
+                        <th className="text-right p-2 font-semibold">% of Range</th>
+                        <th className="text-left p-2 font-semibold">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {allSurveys.map((survey, idx) => (
+                        <tr key={idx} className="border-t border-gray-100">
+                            <td className="p-2">{survey.name}</td>
+                            <td className="text-right p-2 font-medium">{survey.current}</td>
+                            <td className={`text-right p-2 ${parseFloat(survey.vsAvg) < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                            {survey.vsAvg > 0 ? '+' : ''}{survey.vsAvg}%
+                            </td>
+                            <td className="text-right p-2 font-medium">{survey.percentOfRange}%</td>
+                            <td className="p-2">
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                survey.percentOfRange < 33 ? 'bg-red-100 text-red-700' :
+                                survey.percentOfRange < 67 ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-green-100 text-green-700'
+                            }`}>
+                                {survey.percentOfRange < 33 ? 'Historically Low' :
+                                survey.percentOfRange < 67 ? 'Mid-Range' :
+                                'Historically High'}
+                            </span>
+                            </td>
+                        </tr>
+                        ))}
+                    </tbody>
+                    </table>
+                </div>
+                );
+            };
+
+            const HistoricalComparison = () => {
+                const [showNormalized, setShowNormalized] = useState(true);
+                const [selectedSurveys, setSelectedSurveys] = useState([
+                'UMich Consumer',
+                'Conf Board Consumer',
+                'CEO Confidence',
+                'NFIB Small Biz'
+                ]);
+
+                const surveyColors = {
+                'UMich Consumer': '#2563eb',
+                'Conf Board Consumer': '#7c3aed',
+                'Morning Consult': '#db2777',
+                'NY Fed Inflation': '#dc2626',
+                'CEO Confidence': '#ea580c',
+                'Duke CFO': '#ca8a04',
+                'NFIB Small Biz': '#16a34a',
+                'BizRound CEO': '#0891b2',
+                'Philly Fed Mfg': '#4f46e5',
+                'NY Fed Mfg': '#be123c',
+                'EPU Index': '#9333ea',
+                'VIX': '#e11d48',
+                'JOLTS': '#059669',
+                'Fed Rate Uncert': '#0284c7'
+                };
+
+                const surveyMapping = [
+                { short: 'UMich Consumer', full: 'University of Michigan Consumer Sentiment', data: consumerData[0] },
+                { short: 'Conf Board Consumer', full: 'Conference Board Consumer Confidence', data: consumerData[1] },
+                { short: 'Morning Consult', full: 'Morning Consult ICS', data: consumerData[2] },
+                { short: 'NY Fed Inflation', full: 'NY Fed Consumer Expectations - Inflation', data: consumerData[3] },
+                { short: 'CEO Confidence', full: 'Conference Board CEO Confidence', data: businessData[0] },
+                { short: 'Duke CFO', full: 'Duke/Fed CFO Survey Optimism', data: businessData[1] },
+                { short: 'NFIB Small Biz', full: 'NFIB Small Business Optimism', data: businessData[2] },
+                { short: 'BizRound CEO', full: 'Business Roundtable CEO Outlook', data: businessData[3] },
+                { short: 'Philly Fed Mfg', full: 'Philly Fed Manufacturing Outlook', data: businessData[4] },
+                { short: 'NY Fed Mfg', full: 'NY Fed Manufacturing Index', data: businessData[5] },
+                { short: 'EPU Index', full: 'Economic Policy Uncertainty Index', data: uncertaintyData[0] },
+                { short: 'VIX', full: 'VIX (Market Volatility Index)', data: uncertaintyData[1] },
+                { short: 'JOLTS', full: 'JoltsJob Openings Uncertainty', data: uncertaintyData[2] },
+                { short: 'Fed Rate Uncert', full: 'Fed Rate Uncertainty (Implied Volatility)', data: uncertaintyData[3] }
+                ];
+
+                const normalizeValue = (value, low, high) => {
+                return ((value - low) / (high - low)) * 100;
+                };
+
+                const allDates = Array.from(new Set(
+                surveyMapping.flatMap(s => s.data.recentHistory.map(h => h.date))
+                )).sort((a, b) => {
+                const dateOrder = ["Oct 2024", "Jan 2025", "Mar 2025", "Apr 2025", "Jun 2025", "Jul 2025", "Aug 2025", "Sep 2025", "Oct 2025", 
+                                "Q4 2024", "Q1 2025", "Q2 2025", "Q3 2025", "Q4 2025"];
+                return dateOrder.indexOf(a) - dateOrder.indexOf(b);
+                });
+
+                const chartData = allDates.map(date => {
+                const dataPoint = { date };
+                surveyMapping.forEach(survey => {
+                    const histPoint = survey.data.recentHistory.find(h => h.date === date);
+                    if (histPoint) {
+                    dataPoint[survey.short] = histPoint.value;
+                    dataPoint[`${survey.short} (Norm)`] = normalizeValue(
+                        histPoint.value,
+                        survey.data.allTimeLow,
+                        survey.data.allTimeHigh
+                    );
+                    } else {
+                    dataPoint[survey.short] = null;
+                    dataPoint[`${survey.short} (Norm)`] = null;
+                    }
+                });
+                return dataPoint;
+                });
+
+                const toggleSurvey = (survey) => {
+                setSelectedSurveys(prev => 
+                    prev.includes(survey) 
+                    ? prev.filter(s => s !== survey)
+                    : [...prev, survey]
+                );
+                };
+
+                return (
+                <div className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                    {surveyMapping.map(survey => (
+                        <button
+                        key={survey.short}
+                        onClick={() => toggleSurvey(survey.short)}
+                        className={`px-3 py-1 text-xs rounded-full font-medium transition-all ${
+                            selectedSurveys.includes(survey.short)
+                            ? 'text-white shadow-md'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                        style={selectedSurveys.includes(survey.short) ? { backgroundColor: surveyColors[survey.short] } : {}}
+                        >
+                        {survey.short}
+                        </button>
+                    ))}
+                    </div>
+
+                    <div className="flex gap-2">
+                    <button
+                        onClick={() => setShowNormalized(true)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        showNormalized
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                    >
+                        Normalized View (0-100%)
+                    </button>
+                    <button
+                        onClick={() => setShowNormalized(false)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        !showNormalized
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                    >
+                        Actual Values
+                    </button>
+                    </div>
+
+                    {selectedSurveys.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                        Select at least one survey to display
+                    </div>
+                    ) : (
+                    <ResponsiveContainer width="100%" height={400}>
+                        <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis 
+                            dataKey="date" 
+                            tick={{ fontSize: 11 }} 
+                            angle={-45}
+                            textAnchor="end"
+                            height={80}
+                        />
+                        <YAxis 
+                            tick={{ fontSize: 12 }}
+                            domain={showNormalized ? [0, 100] : ['auto', 'auto']}
+                            label={{ 
+                            value: showNormalized ? '% of Historical Range' : 'Index Value',
+                            angle: -90,
+                            position: 'insideLeft',
+                            style: { fontSize: 12 }
+                            }}
+                        />
+                        <Tooltip 
+                            contentStyle={{ fontSize: 12 }}
+                            formatter={(value, name) => {
+                            if (value === null) return ['No data', name];
+                            if (showNormalized && name.includes('(Norm)')) {
+                                return [`${value}%`, name.replace(' (Norm)', '')];
+                            }
+                            return [value, name];
+                            }}
+                        />
+                        {showNormalized ? (
+                            <>
+                            <ReferenceLine y={50} stroke="#666" strokeDasharray="5 5" label={{ value: 'Mid-Range', fontSize: 10 }} />
+                            <ReferenceLine y={20} stroke="#dc2626" strokeDasharray="3 3" label={{ value: 'Low', fontSize: 10 }} />
+                            <ReferenceLine y={80} stroke="#16a34a" strokeDasharray="3 3" label={{ value: 'High', fontSize: 10 }} />
+                            </>
+                        ) : null}
+                        {selectedSurveys.map(survey => (
+                            <Line
+                            key={survey}
+                            type="monotone"
+                            dataKey={showNormalized ? `${survey} (Norm)` : survey}
+                            stroke={surveyColors[survey]}
+                            strokeWidth={2}
+                            dot={{ r: 4 }}
+                            connectNulls={true}
+                            name={survey}
+                            />
+                        ))}
+                        </LineChart>
+                    </ResponsiveContainer>
+                    )}
+
+                    <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded">
+                    <p className="font-semibold mb-1">How to read this chart:</p>
+                    <p className="mb-2"><span className="font-medium">Data Points:</span> Only actual reported values are shown. Monthly surveys show all 13 months. Quarterly surveys show only Q4'24, Q1'25, Q2'25, and Q3'25. Lines connect the dots but gaps between quarterly reports represent periods with no data.</p>
+                    <p className="mb-2"><span className="font-medium">Normalized View:</span> Shows each survey as % of its historical range (0% = all-time low, 100% = all-time high). This allows direct comparison across surveys with different scales.</p>
+                    <p><span className="font-medium">Actual Values:</span> Shows the raw index values as published. Useful for seeing absolute changes but harder to compare across different surveys.</p>
+                    </div>
+                </div>
+                );
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50 p-6">
+                <div className="max-w-7xl mx-auto">
+                    <div className="mb-8">
+                    <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                        US Economic Sentiment & Uncertainty Dashboard
+                    </h1>
+                    <p className="text-gray-600">
+                        Comprehensive view with historical context, ranges, and trends across 14 major surveys (2025)
+                    </p>
+                    </div>
+
+                    <KeyInsights />
+                    <ComparisonTable />
+
+                    <div className="mb-6 flex gap-3 flex-wrap">
+                    <button
+                        onClick={() => setSelectedCategory('all')}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        selectedCategory === 'all'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                        }`}
+                    >
+                        All Surveys ({consumerData.length + businessData.length + uncertaintyData.length})
+                    </button>
+                    <button
+                        onClick={() => setSelectedCategory('consumer')}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        selectedCategory === 'consumer'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                        }`}
+                    >
+                        Consumer Sentiment ({consumerData.length})
+                    </button>
+                    <button
+                        onClick={() => setSelectedCategory('business')}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        selectedCategory === 'business'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                        }`}
+                    >
+                        Business Confidence ({businessData.length})
+                    </button>
+                    <button
+                        onClick={() => setSelectedCategory('uncertainty')}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        selectedCategory === 'uncertainty'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                        }`}
+                    >
+                        Uncertainty Indices ({uncertaintyData.length})
+                    </button>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {selectedCategory === 'all' && (
+                        <>
+                        <div className="md:col-span-2 lg:col-span-3">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Consumer Sentiment</h2>
+                        </div>
+                        {consumerData.map((survey, idx) => (
+                            <SurveyCard key={idx} survey={survey} />
+                        ))}
+                        
+                        <div className="md:col-span-2 lg:col-span-3 mt-6">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Business Confidence</h2>
+                        </div>
+                        {businessData.map((survey, idx) => (
+                            <SurveyCard key={idx} survey={survey} />
+                        ))}
+                        
+                        <div className="md:col-span-2 lg:col-span-3 mt-6">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Uncertainty Indices</h2>
+                        </div>
+                        {uncertaintyData.map((survey, idx) => (
+                            <SurveyCard key={idx} survey={survey} isUncertainty={true} />
+                        ))}
+                        </>
+                    )}
+                    
+                    {selectedCategory === 'consumer' && consumerData.map((survey, idx) => (
+                        <SurveyCard key={idx} survey={survey} />
+                    ))}
+                    
+                    {selectedCategory === 'business' && businessData.map((survey, idx) => (
+                        <SurveyCard key={idx} survey={survey} />
+                    ))}
+                    
+                    {selectedCategory === 'uncertainty' && uncertaintyData.map((survey, idx) => (
+                        <SurveyCard key={idx} survey={survey} isUncertainty={true} />
+                    ))}
+                    </div>
+
+                    <div className="mt-8 bg-white border border-gray-200 rounded-lg p-6">
+                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <BarChart3 className="w-6 h-6 text-blue-600" />
+                        Historical Trends: All Surveys Compared
+                    </h2>
+                    <p className="text-sm text-gray-600 mb-4">
+                        Interactive comparison of normalized sentiment across all 14 surveys. Each line represents a different survey, normalized to show relative position within its historical range (0% = all-time low, 100% = all-time high).
+                    </p>
+                    <HistoricalComparison />
+                    </div>
+
+                    <div className="mt-8 bg-white border border-gray-200 rounded-lg p-6">
+                    <h2 className="text-xl font-bold text-gray-900 mb-4">Understanding the Dashboard</h2>
+                    <div className="grid md:grid-cols-3 gap-6 text-sm">
+                        <div>
+                        <h3 className="font-semibold text-gray-900 mb-2">Historical Context</h3>
+                        <p className="text-gray-700">
+                            Each survey shows current value vs historical average, all-time high/low, and position within historical range. Click any card for detailed charts and milestones.
+                        </p>
+                        </div>
+                        <div>
+                        <h3 className="font-semibold text-gray-900 mb-2">Trend Indicators</h3>
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                            <TrendingDown className="w-4 h-4 text-green-500" />
+                            <span className="text-gray-700">Sentiment improving</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4 text-red-500" />
+                            <span className="text-gray-700">Sentiment declining</span>
+                            </div>
+                        </div>
+                        </div>
+                        <div>
+                        <h3 className="font-semibold text-gray-900 mb-2">Interpretation</h3>
+                        <p className="text-gray-700">
+                            <span className="font-medium">% of Range:</span> Shows where current reading sits between all-time extremes. Below 40% = historically low, above 60% = historically high.
+                        </p>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                {selectedSurvey && (
+                    <DetailModal 
+                    survey={selectedSurvey} 
+                    onClose={() => setSelectedSurvey(null)}
+                    />
+                )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<SentimentDashboard />);
+    </script>
+</body>
+</html>
